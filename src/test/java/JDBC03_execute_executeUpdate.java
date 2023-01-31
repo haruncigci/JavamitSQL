@@ -62,41 +62,107 @@ public class JDBC03_execute_executeUpdate {
         System.out.println("Islemden etkilenen satir sayisi : " + st.executeUpdate(insertData));
 
         /*=======================================================================
-          ORNEK4: isciler tablosuna birden fazla yeni kayıt ekleyelim.
-            INSERT INTO isciler VALUES(70, 'HR', 5000)
+	      ORNEK4: isciler tablosuna birden fazla yeni kayıt ekleyelim.
+
+	        INSERT INTO isciler VALUES(70, 'HR', 5000)
             INSERT INTO isciler VALUES(60, 'LAB', 3000)
             INSERT INTO isciler VALUES(50, 'ARGE', 4000)
-         ========================================================================*/
-        String [] queries = { "INSERT INTO isciler VALUES(70, 'HR', 5000)",
-                              "INSERT INTO isciler VALUES(60, 'LAB', 3000)\n" ,
-                              "INSERT INTO isciler VALUES(50, 'ARGE', 4000)\n"};
+	     ========================================================================*/
+        System.out.println("=============== 1. Yontem ==============");
 
-        int count =0;
-        for (String each: queries){
-            count+=st.executeUpdate(each);
+        String[] queries = {"INSERT INTO isciler VALUES(70, 'HR', 5000)",
+                "INSERT INTO isciler VALUES(60, 'LAB', 3000)",
+                "INSERT INTO isciler VALUES(50, 'ARGE', 4000)"};
+
+        int count = 0;
+        for (String each : queries) {
+            count += st.executeUpdate(each);
         }
-        System.out.println(count + "satir Eklendi");
+        System.out.println(count + " satir eklendi!");
 
-        /*=========================================================================
-        Ornek5:Isciler tablosuna görüntüleyin.
-        ==========================================================================*/
+        // Ayri ayri sorgular ile veritabanina tekrar tekrar ulasmak islemlerin
+        // yavas yapilmasina yol acar. 10000 tane veri kaydi yapildigi dusunuldugunde
+        // bu kotu bir yaklasimdir.
 
-        String selectQuery = "select * from isciler";
+        System.out.println("=============== 2. Yontem ==============");
 
-        ResultSet iscilerTablosu=st.executeQuery(selectQuery);
+        // 2.YONTEM (addBatch ve executeBatch() metotlari ile)
+        // ----------------------------------------------------
+        // addBatch metodu ile SQL ifadeleri gruplandirilabilir ve executeBatch()
+        // metodu ile veritabanina bir kere gonderilebilir.
+        // executeBatch() metodu bir int [] dizi dondurur. Bu dizi her bir ifade sonucunda
+        // etkilenen satir sayisini gosterir.
 
-        while (iscilerTablosu.next()){
-            System.out.println();
+        String[] queries2 = {"INSERT INTO isciler VALUES(10, 'TEKNIK', 3000)",
+                "INSERT INTO isciler VALUES(20, 'KANTIN', 2000)",
+                "INSERT INTO isciler VALUES(30, 'ARGE', 5000)"};
+
+        for (String each : queries2) { // Bu dongude her bir SQL komutunu torbaya atiyor
+            st.addBatch(each);
         }
 
+        st.executeBatch(); // Burada da tek seferde tum torbayi goturup Database'e isliyor
 
+        System.out.println("Satirlar eklendi");
 
+        /*=======================================================================
+	      ORNEK5: isciler tablosuna goruntuleyin.
+	     ========================================================================*/
 
+        System.out.println("================ Isciler Tablosu ================");
 
+        String selectQuery = "SELECT * FROM isciler";
 
+        ResultSet iscilerTablosu = st.executeQuery(selectQuery);
 
+        while (iscilerTablosu.next()) {
+            System.out.println(iscilerTablosu.getInt(1) + " " +
+                    iscilerTablosu.getString(2) + " " +
+                    iscilerTablosu.getInt(3));
+        }
 
+        /*=======================================================================
+		  ORNEK6: isciler tablosundaki maasi 5000'den az olan iscilerin maasina
+		   %10 zam yapiniz.
+		========================================================================*/
+        String updateQuery = "UPDATE isciler SET maas=maas*1.1 WHERE maas<5000";
 
+        int satir = st.executeUpdate(updateQuery);
+
+        System.out.println(satir + " satir guncellendi!");
+
+        /*=======================================================================
+	      ORNEK7: isciler tablosunun son halini goruntuleyin.
+	     ========================================================================*/
+
+        System.out.println("================ Isciler Tablosu Maas Zamlari ================");
+
+        ResultSet iscilerTablosu2 = st.executeQuery(selectQuery);
+
+        while (iscilerTablosu2.next()) {
+            System.out.println(iscilerTablosu2.getInt(1) + " " +
+                    iscilerTablosu2.getString(2) + " " +
+                    iscilerTablosu2.getInt(3));
+        }
+      /*=======================================================================
+	      ORNEK9: isciler tablosunun son halini goruntuleyin.
+	    ========================================================================*/
+
+        System.out.println("================ Isciler Tablosu Son Durum ================");
+
+        ResultSet iscilerTablosu3 = st.executeQuery(selectQuery);
+
+        while(iscilerTablosu3.next()){
+            System.out.println(iscilerTablosu3.getInt(1) + " " +
+                    iscilerTablosu3.getString(2) + " " +
+                    iscilerTablosu3.getInt(3));
+        }
+
+        con.close();
+        st.close();
+        iscilerTablosu.close();
+        iscilerTablosu2.close();
+        iscilerTablosu3.close();
 
     }
 }
